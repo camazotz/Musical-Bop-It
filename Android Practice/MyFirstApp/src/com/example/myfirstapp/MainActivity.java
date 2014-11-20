@@ -1,0 +1,207 @@
+package com.example.myfirstapp;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Calendar;
+
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.app.Activity;
+import android.text.Html;
+import android.view.Menu;
+import android.view.View;
+import android.widget.TextView;
+
+public class MainActivity extends Activity {
+	
+	public String[] names = {"Bakery", "Baracca", "Baracca", "Chop House",
+			"Chop House Grill", "Diner", "Diner Grill", "Vegetarian", "World's Fare",
+			"Beverages", "Cereal", "Condiments", "Deli", "Salad Bar"};
+	
+	
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        
+    }
+
+    private class Parsing extends AsyncTask<String, Integer, String>
+    {
+    	@Override
+    	protected void onPreExecute() {
+    		super.onPreExecute();
+    		//displayProgressBar("Downloading...");
+    	}
+
+		@Override
+		protected String doInBackground(String... arg0) {
+			// TODO Auto-generated method stub
+			URL siteURL;
+			try {
+				String bigLine = "";
+				siteURL = new URL(arg0[0]);
+				BufferedReader in = new BufferedReader(new InputStreamReader(
+						siteURL.openStream(), "UTF-8"));
+				String inputLine;
+				
+				boolean foundmenu = false;
+				while ((inputLine = in.readLine()) != null) {
+					// Find the important line.
+					if (inputLine.contains("Bakery")) {
+						bigLine = inputLine;
+						foundmenu = true;
+					 System.out.println(bigLine);
+					 //ramsHead.append(bigLine + "\n");
+					}
+
+				}
+				in.close();
+				if (!foundmenu) {
+					System.out.println("Error: specified menu not found.");
+					fail(parseFail());
+				}
+				
+				else {
+					int i = 0;
+					success(preParse(i, bigLine, i));
+				}
+			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return null;
+		}
+		
+		protected void fail(TextView y)
+		{
+			y.append("\nError: specified menu not found.");
+			setContentView(y);
+		}
+		
+		protected void success(TextView x)
+		{
+			setContentView(x);
+		}
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.activity_main, menu);
+        return true;
+    }
+    
+    public void ramsShow(View view)
+    {
+    	/*TextView test= (TextView) findViewById(R.id.header);
+    	String tmp = "hi";
+    	test.setText(tmp);*/
+    	//test.setText("hi");
+    	//test.append(" \nyou");
+    	String rams="Rams%20Head%20Dining%20Hall";
+		String lenoir="Top%20of%20Lenoir";
+		TextView ramsHead = new TextView(this);
+		ramsHead = dostuff(rams, "Dinner");
+		
+    	//setContentView(ramsHead);
+    	
+    }
+    
+    public TextView parseFail()
+    {
+    	TextView tmp = new TextView(this);
+    	return tmp;
+    }
+    
+    public TextView preParse(int i, String bigLine, int index)
+    {
+    	TextView ramsHead = new TextView(this);
+    	return parse(i, bigLine, index, ramsHead);
+    }
+    
+    public TextView parse (int i, String bigLine, int index, TextView ramsHead)
+	{
+		String temp ="";
+		
+		while (!temp.contains(names[index]) && i < bigLine.length() - 1) 
+		{
+			if (bigLine.charAt(i) == '<')
+			{
+				while (bigLine.charAt(i) != '>')
+				{
+					i++;
+				}
+				i++;
+				temp = "";
+			}
+			
+			if (i >= bigLine.length() - 1)
+			{break;}
+			
+			while (bigLine.charAt(i) != '<') 
+			{
+				temp += bigLine.charAt(i);
+				i++;
+			}
+			
+			if (temp.contains(names[index]))
+			{
+				//System.out.println(names[index]);
+				ramsHead.append(names[index] + "\n");
+				if (index < 13)
+				{
+					index++;
+				}
+				parse(i, bigLine, index, ramsHead);
+				break;
+			}
+					
+			else if (!temp.equals("&nbsp;") && temp.trim().length() > 0 && !temp.trim().equals("&nbsp;")) 
+			{
+				ramsHead.append(temp + "\n");
+				//System.out.println(temp);
+			}
+		
+		}
+		
+		return ramsHead;
+	}
+    
+    public TextView dostuff(String place, String meal) {
+
+			Calendar javaCalendar = null;
+			 String currentDate = "";
+			 TextView ramsHead = new TextView(this);
+			javaCalendar = Calendar.getInstance();
+			//currentDate = (javaCalendar.get(Calendar.MONTH) + 1) + "/" + javaCalendar.get(Calendar.DATE) + "/" + javaCalendar.get(Calendar.YEAR);
+			currentDate = "01/10/2014";
+			//System.out.println(currentDate);
+			ramsHead.append(currentDate + "\n");
+			
+			String bigLine = "";
+			String targetURL = "http://www.dining.unc.edu/MenusHours/MenuDetails?dt=" +
+					currentDate + "&ml=" + meal + "&loc=" + place + "&res=yes";
+			//URL siteURL = new URL(targetURL);
+			
+			//System.out.println("GETTIN YO FOOD . . .");		
+			ramsHead.append("\nGETTIN YO FOOD . . .\n");
+			//System.out.println(targetURL);
+			
+			//BufferedReader in = new BufferedReader(new InputStreamReader(siteURL.openStream(), "UTF-8"));
+			new Parsing().execute(targetURL);	
+			
+			return ramsHead;
+	}// end main
+    
+}
